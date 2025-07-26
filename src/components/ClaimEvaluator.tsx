@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Upload, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, FileText, AlertCircle, CheckCircle, XCircle, Brain, Sparkles, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LLMService } from '@/services/LLMService';
 
@@ -32,52 +32,17 @@ interface EvaluationResult {
 
 export const ClaimEvaluator = () => {
   const [query, setQuery] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
   const [apiKey, setApiKey] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files || []);
-    const validFiles = uploadedFiles.filter(file => {
-      const validTypes = ['.pdf', '.doc', '.docx', '.txt', '.eml'];
-      const hasValidExtension = validTypes.some(type => 
-        file.name.toLowerCase().endsWith(type) || file.type.includes(type.replace('.', ''))
-      );
-      return hasValidExtension && file.size <= 10 * 1024 * 1024; // 10MB limit
-    });
-
-    if (validFiles.length !== uploadedFiles.length) {
-      toast({
-        title: "Some files were rejected",
-        description: "Please upload PDF, Word, or email files under 10MB",
-        variant: "destructive",
-      });
-    }
-
-    setFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
   const handleEvaluate = async () => {
     if (!query.trim()) {
       toast({
         title: "Query required",
         description: "Please describe your medical case",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (files.length === 0) {
-      toast({
-        title: "Policy documents required",
-        description: "Please upload at least one policy document",
         variant: "destructive",
       });
       return;
@@ -95,7 +60,7 @@ export const ClaimEvaluator = () => {
 
     setIsEvaluating(true);
     try {
-      const evaluation = await LLMService.evaluateClaim(query, files, apiKey);
+      const evaluation = await LLMService.evaluateClaim(query, [], apiKey);
       setResult(evaluation);
       toast({
         title: "Evaluation complete",
@@ -136,197 +101,210 @@ export const ClaimEvaluator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-accent/30 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Insurance Claim Evaluator
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            AI-powered analysis to determine if your medical procedure is covered under your insurance policy
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Input */}
-          <div className="space-y-6">
-            {/* Query Input */}
-            <Card className="shadow-[var(--card-shadow)] hover:shadow-[var(--card-shadow-hover)] transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Describe Your Case
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Example: 46-year-old male, knee surgery in Pune, 3-month-old insurance policy"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="min-h-[120px] rounded-lg border-border focus:ring-2 focus:ring-primary/20"
-                />
-              </CardContent>
-            </Card>
-
-            {/* File Upload */}
-            <Card className="shadow-[var(--card-shadow)] hover:shadow-[var(--card-shadow-hover)] transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-primary" />
-                  Upload Policy Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.txt,.eml"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload PDF, Word, or email files (max 10MB each)
-                    </p>
-                  </label>
-                </div>
-
-                {files.length > 0 && (
-                  <div className="space-y-2">
-                    {files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-medium truncate">{file.name}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* API Key Input */}
-            {showApiKeyInput && (
-              <Card className="shadow-[var(--card-shadow)] border-warning/20">
-                <CardHeader>
-                  <CardTitle className="text-warning">OpenAI API Key Required</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    For production use, we recommend connecting to Supabase to securely store API keys.
-                  </p>
-                  <Input
-                    type="password"
-                    placeholder="sk-..."
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    className="rounded-lg"
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Evaluate Button */}
-            <Button
-              onClick={handleEvaluate}
-              disabled={isEvaluating}
-              className="w-full h-12 text-base font-semibold rounded-lg bg-[var(--healthcare-gradient)] hover:opacity-90 transition-opacity"
-            >
-              {isEvaluating ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Evaluating Claim...
-                </>
-              ) : (
-                'Evaluate Claim'
-              )}
-            </Button>
+    <div className="min-h-screen bg-[var(--gradient-background)] relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/10"></div>
+      <div className="absolute top-20 right-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-20 left-20 w-80 h-80 bg-accent/20 rounded-full blur-3xl"></div>
+      
+      <div className="relative z-10 p-4 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="p-3 bg-primary/10 rounded-2xl backdrop-blur-sm border border-primary/20">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <div className="p-2 bg-primary/5 rounded-xl backdrop-blur-sm">
+                <Brain className="w-6 h-6 text-primary animate-pulse" />
+              </div>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary-hover to-primary bg-clip-text text-transparent mb-4">
+              Insurance Claim Evaluator
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              AI-powered intelligent analysis to determine if your medical procedure is covered under your insurance policy
+            </p>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              <span className="text-sm text-primary font-medium">Powered by Advanced AI</span>
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            </div>
           </div>
 
-          {/* Right Column - Results */}
-          <div>
-            <Card className="shadow-[var(--card-shadow)] h-fit">
-              <CardHeader>
-                <CardTitle>Evaluation Results</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!result ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Results will appear here after evaluation</p>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Left Column - Input */}
+            <div className="space-y-6">
+              {/* Query Input */}
+              <Card className="backdrop-blur-sm bg-[var(--gradient-card)] border-white/20 shadow-[var(--card-shadow)] hover:shadow-[var(--card-shadow-hover)] hover:shadow-[var(--glow-primary)] transition-all duration-300">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    Describe Your Medical Case
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Example: 46-year-old male, knee surgery in Mumbai, Health policy purchased 6 months ago with Star Health Insurance, looking to claim for ACL reconstruction surgery..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="min-h-[150px] rounded-xl border-white/30 focus:ring-2 focus:ring-primary/30 bg-white/50 backdrop-blur-sm resize-none"
+                  />
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    💡 Include details like age, gender, procedure type, location, policy details, and insurance provider
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* API Key Input */}
+              {showApiKeyInput && (
+                <Card className="backdrop-blur-sm bg-gradient-to-br from-warning/10 to-warning/5 border-warning/30 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-warning flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      OpenAI API Key Required
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      For production use, we recommend connecting to Supabase to securely store API keys.
+                    </p>
+                    <Input
+                      type="password"
+                      placeholder="sk-..."
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      className="rounded-xl bg-white/70 border-warning/30"
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Evaluate Button */}
+              <Button
+                onClick={handleEvaluate}
+                disabled={isEvaluating}
+                className="w-full h-14 text-lg font-semibold rounded-xl bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+              >
+                {isEvaluating ? (
+                  <>
+                    <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                    <span className="flex items-center gap-2">
+                      Analyzing with AI
+                      <Brain className="w-4 h-4 animate-pulse" />
+                    </span>
+                  </>
                 ) : (
-                  <div className="space-y-6">
-                    {/* Decision Badge */}
-                    <div className="flex items-center gap-3">
-                      {getDecisionIcon(result.decision)}
-                      <Badge className={`${getDecisionColor(result.decision)} text-sm px-3 py-1`}>
-                        {result.decision}
-                      </Badge>
-                      {result.amount && (
-                        <span className="text-lg font-semibold">₹{result.amount.toLocaleString()}</span>
-                      )}
-                    </div>
-
-                    {/* Parsed Query */}
-                    <div>
-                      <h4 className="font-semibold mb-2">Parsed Information</h4>
-                      <div className="bg-secondary p-3 rounded-lg space-y-1 text-sm">
-                        {result.parsedQuery.age && <p><strong>Age:</strong> {result.parsedQuery.age}</p>}
-                        {result.parsedQuery.gender && <p><strong>Gender:</strong> {result.parsedQuery.gender}</p>}
-                        {result.parsedQuery.procedure && <p><strong>Procedure:</strong> {result.parsedQuery.procedure}</p>}
-                        {result.parsedQuery.location && <p><strong>Location:</strong> {result.parsedQuery.location}</p>}
-                        {result.parsedQuery.policyDuration && <p><strong>Policy Duration:</strong> {result.parsedQuery.policyDuration}</p>}
-                      </div>
-                    </div>
-
-                    {/* Justification */}
-                    <div>
-                      <h4 className="font-semibold mb-3">Policy Analysis</h4>
-                      <div className="space-y-3">
-                        {result.justification.map((clause, index) => (
-                          <div key={index} className="border border-border rounded-lg p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-medium text-sm">{clause.title}</h5>
-                              {clause.pageNumber && (
-                                <Badge variant="outline" className="text-xs">
-                                  Page {clause.pageNumber}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground italic mb-2">
-                              "{clause.snippet}"
-                            </p>
-                            <p className="text-sm">{clause.reasoning}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Raw JSON */}
-                    <details className="text-xs">
-                      <summary className="cursor-pointer font-medium mb-2">View Raw JSON</summary>
-                      <pre className="bg-muted p-3 rounded-lg overflow-auto text-xs">
-                        {JSON.stringify(result, null, 2)}
-                      </pre>
-                    </details>
-                  </div>
+                  <span className="flex items-center gap-3">
+                    <Brain className="w-5 h-5" />
+                    Evaluate Claim with AI
+                    <Sparkles className="w-5 h-5" />
+                  </span>
                 )}
-              </CardContent>
-            </Card>
+              </Button>
+            </div>
+
+            {/* Right Column - Results */}
+            <div>
+              <Card className="backdrop-blur-sm bg-[var(--gradient-card)] border-white/20 shadow-[var(--card-shadow)] h-fit">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Shield className="w-5 h-5 text-primary" />
+                    </div>
+                    AI Evaluation Results
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!result ? (
+                    <div className="text-center py-16 text-muted-foreground">
+                      <div className="relative mb-6">
+                        <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
+                          <Brain className="w-8 h-8 text-primary/50" />
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center">
+                          <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+                        </div>
+                      </div>
+                      <p className="text-lg mb-2">Ready for AI Analysis</p>
+                      <p className="text-sm">Your detailed evaluation results will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Decision Badge */}
+                      <div className="flex items-center gap-4 p-4 bg-white/30 rounded-xl backdrop-blur-sm">
+                        <div className="p-2 bg-white/50 rounded-lg">
+                          {getDecisionIcon(result.decision)}
+                        </div>
+                        <div className="flex-1">
+                          <Badge className={`${getDecisionColor(result.decision)} text-base px-4 py-2 font-semibold`}>
+                            {result.decision}
+                          </Badge>
+                          {result.amount && (
+                            <div className="text-2xl font-bold text-primary mt-1">
+                              ₹{result.amount.toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Parsed Query */}
+                      <div className="p-4 bg-white/30 rounded-xl backdrop-blur-sm">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" />
+                          Parsed Information
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          {result.parsedQuery.age && <p><strong>Age:</strong> {result.parsedQuery.age}</p>}
+                          {result.parsedQuery.gender && <p><strong>Gender:</strong> {result.parsedQuery.gender}</p>}
+                          {result.parsedQuery.procedure && <p><strong>Procedure:</strong> {result.parsedQuery.procedure}</p>}
+                          {result.parsedQuery.location && <p><strong>Location:</strong> {result.parsedQuery.location}</p>}
+                          {result.parsedQuery.policyDuration && <p><strong>Policy Duration:</strong> {result.parsedQuery.policyDuration}</p>}
+                        </div>
+                      </div>
+
+                      {/* Justification */}
+                      <div>
+                        <h4 className="font-semibold mb-4 flex items-center gap-2">
+                          <Brain className="w-4 h-4 text-primary" />
+                          AI Policy Analysis
+                        </h4>
+                        <div className="space-y-3">
+                          {result.justification.map((clause, index) => (
+                            <div key={index} className="p-4 bg-white/30 rounded-xl backdrop-blur-sm border border-white/20">
+                              <div className="flex items-start justify-between mb-3">
+                                <h5 className="font-medium text-sm text-primary">{clause.title}</h5>
+                                {clause.pageNumber && (
+                                  <Badge variant="outline" className="text-xs bg-white/50">
+                                    Page {clause.pageNumber}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground italic mb-3 p-2 bg-white/20 rounded-lg">
+                                "{clause.snippet}"
+                              </p>
+                              <p className="text-sm leading-relaxed">{clause.reasoning}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Raw JSON */}
+                      <details className="text-xs">
+                        <summary className="cursor-pointer font-medium mb-2 p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
+                          View Technical Details (JSON)
+                        </summary>
+                        <pre className="bg-muted/50 p-3 rounded-lg overflow-auto text-xs mt-2 backdrop-blur-sm">
+                          {JSON.stringify(result, null, 2)}
+                        </pre>
+                      </details>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

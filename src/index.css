@@ -8,17 +8,17 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 248 250 252;
     --foreground: 221 32% 17%;
 
-    --card: 0 0% 100%;
+    --card: 255 255 255;
     --card-foreground: 221 32% 17%;
 
-    --popover: 0 0% 100%;
+    --popover: 255 255 255;
     --popover-foreground: 221 32% 17%;
 
     --primary: 217 82% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 255 255 255;
     --primary-hover: 217 82% 48%;
 
     --secondary: 217 30% 96%;
@@ -31,21 +31,24 @@ All colors MUST be HSL.
     --accent-foreground: 221 32% 17%;
 
     --success: 145 80% 35%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 255 255 255;
 
     --warning: 43 90% 55%;
-    --warning-foreground: 0 0% 100%;
+    --warning-foreground: 255 255 255;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 255 255 255;
 
     --border: 217 15% 90%;
     --input: 217 15% 90%;
     --ring: 217 82% 55%;
 
-    --healthcare-gradient: linear-gradient(135deg, hsl(217 82% 55%), hsl(217 82% 48%));
-    --card-shadow: 0 4px 20px -2px hsl(217 20% 85% / 0.2);
-    --card-shadow-hover: 0 8px 30px -4px hsl(217 20% 85% / 0.3);
+    --gradient-primary: linear-gradient(135deg, hsl(217 82% 55%), hsl(217 82% 48%));
+    --gradient-background: linear-gradient(135deg, hsl(248 100% 98%), hsl(217 100% 97%), hsl(240 100% 98%));
+    --gradient-card: linear-gradient(145deg, hsl(255 255 255 / 0.8), hsl(248 100% 99%));
+    --card-shadow: 0 8px 32px -8px hsl(217 20% 70% / 0.15);
+    --card-shadow-hover: 0 16px 48px -12px hsl(217 20% 70% / 0.25);
+    --glow-primary: 0 0 40px hsl(217 82% 55% / 0.3);
 
     --radius: 0.5rem;
 
